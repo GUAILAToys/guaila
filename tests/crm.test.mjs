@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';import {parseReport,findMatches,mergeCustomer,domain} from '../lib/crm.mjs';
+assert.equal(domain('https://WWW.Example.co.uk/a?x=1'),'example.co.uk');
+assert.equal(domain('https://galvanize.artstation.com'),'galvanize.artstation.com');
+let page='01 Test Brand\n美国｜IP玩具文创｜A1\n官网：https://www.testbrand.com/\n已核验事实：原创毛绒系列。\n规模：两人工作室\n联系：HELLO@testbrand.com\nhello@domain.com';
+let cs=parseReport([page,page],'pdf1');assert.equal(cs.length,1);assert.deepEqual(cs[0].emails,['hello@testbrand.com']);assert.equal(cs[0].domain,'testbrand.com');
+let old={...cs[0],id:'one',notes:'人工信息',stage:'打样',reviewed:true},fresh={...cs[0],stage:'待审核',notes:'旧报告',sources:[{id:'pdf2',page:1}]};let merged=mergeCustomer(old,fresh);assert.equal(merged.stage,'打样');assert.equal(merged.notes,'人工信息');assert.equal(merged.sources.length,2);assert.equal(mergeCustomer(merged,fresh).sources.length,2);
+assert.equal(findMatches({...fresh,domain:'',emails:['HELLO@testbrand.com'],name:'Another'},[old]).length,1);
+assert.equal(findMatches({...fresh,domain:'testbrand.com',emails:['other@different.com']},[old,{id:'two',name:'Different',domain:'different.com',emails:['other@different.com']}]).length,2);
+assert.equal(parseReport(['01 Foo\n美国\nSubject: Draft\nHello'],'x').length,0);
+console.log('PASS: domain, PDF extraction, duplicate cards, placeholder exclusion, identity conflicts, protected manual fields, idempotent evidence');
